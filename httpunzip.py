@@ -102,6 +102,3 @@ if __name__ == '__main__':
         print list_files(args.url, details=True)
     elif args.files:
         http_unzip(args.url, args.files, args.targetpath)
-
-
-#http_unzip('http://palm.cdnetworks.net/rom/pre2/p201r0d11242010/wrep201rod/webosdoctorp102ueuna-wr.jar')
