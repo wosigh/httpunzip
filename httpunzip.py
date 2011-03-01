@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 
 import struct, urllib2, zipfile, io, os, shutil, argparse
 
@@ -82,7 +82,7 @@ def list_files(url, details=False):
     if details:
         return centdir
     else:
-        centdir.keys()
+        return centdir.keys()
 
 def http_unzip(url, filenames, targetpath):
     endrec = get_endrec(url)
@@ -101,6 +101,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
         
     if args.list:
-        print list_files(args.url, details=True)
+        for f in list_files(args.url, details=False):
+            print f
     elif args.files:
         http_unzip(args.url, args.files, args.targetpath)
