@@ -1,17 +1,35 @@
-import struct, urllib2, zipfile, io, shutil, argparse
+import struct, urllib2, zipfile, io, os, shutil, argparse
 
-def get_file(url, zinfo):
-    z_end = zinfo.header_offset + zipfile.sizeFileHeader + len(zinfo.extra) + zinfo.compress_size
+def get_file(url, zinfo, targetpath=None):
+    z_start = zinfo.header_offset + zipfile.sizeFileHeader + len(zinfo.filename) + len(zinfo.extra)
+    z_end = z_start + zinfo.compress_size
     req = urllib2.Request(url)
-    req.add_header("Range","bytes=%s-%s" % (zinfo.header_offset, z_end))
+    req.add_header("Range","bytes=%s-%s" % (z_start, z_end))
     f = urllib2.urlopen(req)
     data = f.read()
     tmp = io.StringIO(data)
     z = zipfile.ZipExtFile(fileobj=tmp, zipinfo=zinfo)
-    target = file("test.png", "wb")
+    if targetpath is None:
+        targetpath = os.getcwd()
+    if (targetpath[-1:] in (os.path.sep, os.path.altsep) and len(os.path.splitdrive(targetpath)[1]) > 1):
+        targetpath = targetpath[:-1]
+    if zinfo.filename[0] == '/':
+        targetpath = os.path.join(targetpath, zinfo.filename[1:])
+    else:
+        targetpath = os.path.join(targetpath, zinfo.filename)
+    targetpath = os.path.normpath(targetpath)
+    upperdirs = os.path.dirname(targetpath)
+    if upperdirs and not os.path.exists(upperdirs):
+        os.makedirs(upperdirs)
+    if zinfo.filename[-1] == '/':
+        if not os.path.isdir(targetpath):
+            os.mkdir(targetpath)
+        return targetpath    
+    target = file(targetpath, "wb")
     shutil.copyfileobj(z, target)
     z.close()
     target.close()
+    return targetpath
     
 
 def get_centdir(url, endrec):
@@ -64,18 +82,17 @@ def list_files(url, details=False):
     else:
         centdir.keys()
 
-def http_unzip(url, filenames):
+def http_unzip(url, filenames, targetpath):
     endrec = get_endrec(url)
     centdir = get_centdir(url, endrec)
     for fn in filenames:
-        get_file(url, centdir[fn])
-        #tmp = io.StringIO()
-        #print centdir[fn]
+        print get_file(url, centdir[fn], targetpath)
     
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-l', '--list', action="store_true", dest="list", help='List files in remote archive.')
+    parser.add_argument('-p', '--path', action="store", dest="targetpath", help='Target path for extracted files.')
     parser.add_argument('files', metavar='FILE', nargs='*')
     group = parser.add_argument_group('required arguments')
     group.add_argument('-u', '--url', action="store", dest="url", required=True, help='The URL of the target zip or jar file.', metavar='URL')
@@ -84,7 +101,7 @@ if __name__ == '__main__':
     if args.list:
         print list_files(args.url, details=True)
     elif args.files:
-        http_unzip(args.url, args.files)
+        http_unzip(args.url, args.files, args.targetpath)
 
 
 #http_unzip('http://palm.cdnetworks.net/rom/pre2/p201r0d11242010/wrep201rod/webosdoctorp102ueuna-wr.jar')
