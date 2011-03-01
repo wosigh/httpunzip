@@ -1,3 +1,5 @@
+#/usr/bin/env python
+
 import struct, urllib2, zipfile, io, os, shutil, argparse
 
 def get_file(url, zinfo, targetpath=None):
