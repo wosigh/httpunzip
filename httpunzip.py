@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import struct, urllib2, zipfile, io, os, shutil, argparse
+import struct, urllib2, zipfile, os, shutil, cStringIO, argparse
 
 def get_file(url, zinfo, targetpath=None):
     z_start = zinfo.header_offset + zipfile.sizeFileHeader + len(zinfo.filename) + len(zinfo.extra)
@@ -9,7 +9,7 @@ def get_file(url, zinfo, targetpath=None):
     req.add_header("Range","bytes=%s-%s" % (z_start, z_end))
     f = urllib2.urlopen(req)
     data = f.read()
-    tmp = io.StringIO(data)
+    tmp = cStringIO.StringIO(data)
     z = zipfile.ZipExtFile(fileobj=tmp, zipinfo=zinfo)
     if targetpath is None:
         targetpath = os.getcwd()
