@@ -1,6 +1,6 @@
 import struct, urllib2, zipfile, os, shutil, cStringIO
 
-def _get_file(url, zinfo, targetpath=None):
+def _get_file(url, zinfo, targetpath=None, strip=False):
     z_start = zinfo.header_offset + zipfile.sizeFileHeader + len(zinfo.filename) + len(zinfo.extra)
     z_end = z_start + zinfo.compress_size
     req = urllib2.Request(url)
@@ -13,10 +13,13 @@ def _get_file(url, zinfo, targetpath=None):
         targetpath = os.getcwd()
     if (targetpath[-1:] in (os.path.sep, os.path.altsep) and len(os.path.splitdrive(targetpath)[1]) > 1):
         targetpath = targetpath[:-1]
-    if zinfo.filename[0] == '/':
-        targetpath = os.path.join(targetpath, zinfo.filename[1:])
+    if strip:
+        targetpath = os.path.join(targetpath, zinfo.filename.split('/')[-1])
     else:
-        targetpath = os.path.join(targetpath, zinfo.filename)
+        if zinfo.filename[0] == '/':
+            targetpath = os.path.join(targetpath, zinfo.filename[1:])
+        else:
+            targetpath = os.path.join(targetpath, zinfo.filename)
     targetpath = os.path.normpath(targetpath)
     upperdirs = os.path.dirname(targetpath)
     if upperdirs and not os.path.exists(upperdirs):
@@ -82,8 +85,10 @@ def list_files(url, details=False):
     else:
         return centdir.keys()
 
-def http_unzip(url, filenames, targetpath):
+def http_unzip(url, filenames, targetpath, verbose=False, strip=False):
     endrec = _get_endrec(url)
     centdir = _get_centdir(url, endrec)
     for fn in filenames:
-        print _get_file(url, centdir[fn], targetpath)
+        f = _get_file(url, centdir[fn], targetpath, strip)
+        if verbose:
+            print f

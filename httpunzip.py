@@ -17,4 +17,4 @@ if __name__ == '__main__':
         for f in list_files(args.url, details=False):
             print f
     elif args.files:
-        http_unzip(args.url, args.files, args.targetpath)
+        http_unzip(args.url, args.files, args.targetpath, verbose=True)
