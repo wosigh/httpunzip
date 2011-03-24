@@ -87,7 +87,9 @@ def list_files(url, details=False):
 
 def http_unzip(url, filenames, targetpath, verbose=False, strip=False):
     endrec = _get_endrec(url)
+    assert endrec, 'No End Record'  
     centdir = _get_centdir(url, endrec)
+    assert centdir, 'No Central Directory'
     files = []
     for fn in filenames:
         f = _get_file(url, centdir[fn], targetpath, strip)
