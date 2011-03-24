@@ -93,6 +93,7 @@ def http_unzip(url, filenames, targetpath, verbose=False, strip=False):
     files = []
     for fn in filenames:
         f = _get_file(url, centdir[fn], targetpath, strip)
+        assert f, 'No Zip File'
         files.append(f)
         if verbose:
             print f
