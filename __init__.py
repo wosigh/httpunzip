@@ -1,22 +1,5 @@
 import struct, urllib2, zipfile, os, shutil, cStringIO
 
-class HttpUnzipExcpetion(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        if self.value == 1:
-            return 'No End Record'
-        elif self.value == 2:
-            return 'No Central Directory'
-        elif self.value == 3:
-            return 'No ZIP File'
-        else:
-            return 'Unknown Error'
-        
-def _assert(var, value):
-    if not var:
-        raise HttpUnzipException(value)
-
 def _get_file(url, zinfo, targetpath=None, strip=False):
     z_start = zinfo.header_offset + zipfile.sizeFileHeader + len(zinfo.filename) + len(zinfo.extra)
     z_end = z_start + zinfo.compress_size
@@ -102,16 +85,30 @@ def list_files(url, details=False):
     else:
         return centdir.keys()
 
-def http_unzip(url, filenames, targetpath, verbose=False, strip=False):
+def http_unzip(url, filenames, targetpath, verbose=False, strip=False, callback=None):
+    if callback:
+        callback(0, 'FIND_ENDREC')
     endrec = _get_endrec(url)
-    _assert(endrec, 1)  
+    if endrec:
+        callback(100, 'FIND_ENDREC_SUCCESS')
+    else:
+        callback(0, 'FIND_ENDREC_FAILED')
+        return None
+    if callback:
+        callback(0, 'FIND_CENTDIR')
     centdir = _get_centdir(url, endrec)
-    _assert(centdir, 2)
+    if cendir:
+        callback(100, 'FIND_CENTDIR_SUCCESS')
+    else:
+        callback(0, 'FIND_CENTDIR_FAILED')
     files = []
-    for fn in filenames:
-        f = _get_file(url, centdir[fn], targetpath, strip)
-        _assert(f, 3)
-        files.append(f)
-        if verbose:
-            print f
+    r = len(filenames)
+    for i in range(0, r):
+        if callback:
+            callback(0, 'HTTPUNZIP %s' % (filenames[i]))
+        f = _get_file(url, centdir[filenames[i]], targetpath, strip)
+        if f:
+            files.append(f)
+            if verbose:
+                print f
     return files
