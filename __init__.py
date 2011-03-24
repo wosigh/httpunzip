@@ -1,5 +1,22 @@
 import struct, urllib2, zipfile, os, shutil, cStringIO
 
+class HttpUnzipExcpetion(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        if self.value == 1:
+            return 'No End Record'
+        elif self.value == 2:
+            return 'No Central Directory'
+        elif self.value == 3:
+            return 'No ZIP File'
+        else:
+            return 'Unknown Error'
+        
+def _assert(var, value):
+    if not var:
+        raise HttpUnzipException(value)
+
 def _get_file(url, zinfo, targetpath=None, strip=False):
     z_start = zinfo.header_offset + zipfile.sizeFileHeader + len(zinfo.filename) + len(zinfo.extra)
     z_end = z_start + zinfo.compress_size
@@ -87,13 +104,13 @@ def list_files(url, details=False):
 
 def http_unzip(url, filenames, targetpath, verbose=False, strip=False):
     endrec = _get_endrec(url)
-    assert endrec, 'No End Record'  
+    _assert(endrec, 1)  
     centdir = _get_centdir(url, endrec)
-    assert centdir, 'No Central Directory'
+    _assert(centdir, 2)
     files = []
     for fn in filenames:
         f = _get_file(url, centdir[fn], targetpath, strip)
-        assert f, 'No Zip File'
+        _assert(f, 3)
         files.append(f)
         if verbose:
             print f
