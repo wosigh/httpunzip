@@ -97,7 +97,7 @@ def http_unzip(url, filenames, targetpath, verbose=False, strip=False, callback=
     if callback:
         callback(0, 'FIND_CENTDIR')
     centdir = _get_centdir(url, endrec)
-    if cendir:
+    if centdir:
         callback(100, 'FIND_CENTDIR_SUCCESS')
     else:
         callback(0, 'FIND_CENTDIR_FAILED')
